@@ -1,0 +1,44 @@
+# Archivo de ejemplo que quiero ignorar en Git
+emoticones.txt
+
+# Archivos de datos crudos
+## no se incluyen porque son muy pesados y ya se encuentran en 
+## la fuente original
+data/raw/TMDB-IMDB-Movies-Dataset.csv
+
+
+
+## Otros archivos que se pueden generar automáticamente
+## y no son necesarios para el control de versiones
+
+# Entornos virtuales de Python
+.venv/
+venv/
+env/
+
+# Archivos generados por Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Configuración local y secretos
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Configuración de editores
+.idea/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de pruebas y cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

@@ -1,0 +1,181 @@
+import argostranslate.translate
+import streamlit as st
+
+
+# Función para traducir texto
+def traducir_texto(texto, idioma_origen="en", idioma_destino="es"):
+
+    if not isinstance(texto, str) or not texto.strip():
+        return texto
+
+    try:
+        with st.spinner("Traduciendo..."):
+            traduccion = argostranslate.translate.translate(
+                texto, idioma_origen, idioma_destino
+            )
+
+    except Exception as e:
+        st.error(f"Error al traducir: {e}")
+        return texto
+
+    return traduccion
+
+
+def traducir_genero(genero):
+    traducciones_generos = {
+        "Action": "Acción",
+        "Adventure": "Aventura",
+        "Animation": "Animación",
+        "Comedy": "Comedia",
+        "Crime": "Crimen",
+        "Documentary": "Documental",
+        "Drama": "Drama",
+        "Family": "Familiar",
+        "Fantasy": "Fantasía",
+        "History": "Historia",
+        "Horror": "Terror",
+        "Music": "Música",
+        "Mystery": "Misterio",
+        "Romance": "Romance",
+        "Science Fiction": "Ciencia Ficción",
+        "TV Movie": "Película de TV",
+        "Thriller": "Suspenso",
+        "War": "Guerra",
+        "Western": "Western",
+    }
+
+    return traducciones_generos.get(genero, genero)
+
+
+def traducir_idioma(idioma):
+    traducciones_idiomas = {
+        "en": "Inglés",
+        "ko": "Coreano",
+        "fr": "Francés",
+        "ja": "Japonés",
+        "it": "Italiano",
+        "es": "Español",
+        "pt": "Portugués",
+        "hi": "Hindi",
+        "tr": "Turco",
+        "da": "Danés",
+        "de": "Alemán",
+        "cn": "Chino",
+        "id": "Indonesio",
+        "zh": "Chino",
+        "sv": "Sueco",
+        "el": "Griego",
+        "ru": "Ruso",
+        "fa": "Persa",
+        "th": "Tailandés",
+        "ar": "Árabe",
+        "pl": "Polaco",
+        "no": "Noruego",
+        "te": "Telugu",
+        "nl": "Neerlandés",
+        "hu": "Húngaro",
+        "he": "Hebreo",
+        "sr": "Serbio",
+        "ro": "Rumano",
+        "gl": "Gallego",
+        "et": "Estonio",
+        "bs": "Bosnio",
+        "is": "Islandés",
+        "bn": "Bengalí",
+        "xx": "Desconocido",
+        "sh": "Serbocroata",
+        "cs": "Checo",
+        "fi": "Finés",
+        "tn": "Setsuana",
+        "ml": "Malayalam",
+        "uk": "Ucraniano",
+        "mk": "Macedonio",
+        "ga": "Irlandés",
+        "hy": "Armenio",
+        "ku": "Kurdo",
+        "ka": "Georgiano",
+        "ta": "Tamil",
+        "kn": "Canarés",
+        "vi": "Vietnamita",
+        "ca": "Catalán",
+        "dz": "Dzongkha",
+        "tl": "Tagalo",
+        "wo": "Wólof",
+        "sk": "Eslovaco",
+        "lv": "Letón",
+        "bo": "Tibetano",
+        "ps": "Pastún",
+        "mn": "Mongol",
+        "ur": "Urdu",
+        "sl": "Esloveno",
+        "hr": "Croata",
+        "se": "Sami",
+        "iu": "Inuktitut",
+        "bm": "Bambara",
+        "mr": "Maratí",
+        "bg": "Búlgaro",
+        "lo": "Lao",
+        "qu": "Quechua",
+        "sq": "Albanés",
+        "gu": "Guyaratí",
+        "zu": "Zulú",
+        "lt": "Lituano",
+        "kk": "Kazajo",
+        "sw": "Suajili",
+        "st": "Sesotho",
+        "ms": "Malayo",
+        "am": "Amhárico",
+        "ay": "Aimara",
+        "ln": "Lingala",
+        "af": "Afrikáans",
+        "si": "Cingalés",
+        "mo": "Moldavo",
+        "as": "Asamés",
+        "ne": "Nepalí",
+        "pa": "Punyabí",
+        "mi": "Maorí",
+        "sn": "Shona",
+        "ky": "Kirguís",
+        "az": "Azerí",
+        "jv": "Javanés",
+        "km": "Jemer",
+        "ks": "Cachemir",
+        "fo": "Feroés",
+        "cy": "Galés",
+        "lb": "Luxemburgués",
+        "eu": "Euskera",
+        "ff": "Fula",
+        "fy": "Frisón",
+        "mt": "Maltés",
+        "ht": "Criollo haitiano",
+        "so": "Somalí",
+        "or": "Odia",
+        "mg": "Malgache",
+        "kl": "Groenlandés",
+        "yi": "Yidis",
+        "uz": "Uzbeko",
+        "sa": "Sánscrito",
+        "nv": "Navajo",
+        "gd": "Gaélico",
+        "ig": "Igbo",
+        "xh": "Xhosa",
+        "tt": "Tártaro",
+        "be": "Bielorruso",
+        "nb": "Noruego bokmål",
+        "rw": "Kinyarwanda",
+        "ab": "Abjasio",
+        "dv": "Divehi",
+        "my": "Birmano",
+        "ha": "Hausa",
+        "nd": "Ndebele",
+        "gv": "Manés",
+        "yo": "Yoruba",
+        "tk": "Turcomano",
+        "mh": "Marshalés",
+        "ty": "Tahitiano",
+        "kw": "Córnico",
+        "kg": "Kongo",
+        "tg": "Tayiko",
+    }
+
+    return traducciones_idiomas.get(idioma, "Desconocido")

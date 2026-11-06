@@ -25,3 +25,14 @@ pag = st.navigation(
 )
 
 pag.run()
+
+
+# COPYRIGHT
+st.divider()
+
+izquierda, centro, derecha = st.columns([1, 2, 1])
+with centro:
+    st.caption(
+        "© 2026 Cindy Estrada · CineArte · "
+        "[Creative Commons BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)"
+    )

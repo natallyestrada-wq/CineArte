@@ -50,15 +50,23 @@ with col3:
 
 # ESTADÍSTICAS DE USO
 st.divider()
-st.subheader("Mi Cine")
+st.subheader("Tus estadísticas")
+
+# Inicialización de variables de sesión
+if "pelis_ver" not in st.session_state:
+    st.session_state["pelis_ver"] = []
+if "pelis_vistas" not in st.session_state:
+    st.session_state["pelis_vistas"] = []
+if "partidas_jugadas" not in st.session_state:
+    st.session_state["partidas_jugadas"] = 0
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Películas vistas", 12)
+    st.metric("Películas vistas", len(st.session_state["pelis_vistas"]))
 with col2:
-    st.metric("Películas para ver", 8)
+    st.metric("Películas para ver", len(st.session_state["pelis_ver"]))
 with col3:
-    st.metric("Partidas jugadas", 4)
+    st.metric("Partidas jugadas", st.session_state["partidas_jugadas"])
 # st.write(f"Contador: {st.session_state.contador}")
 
 # ACERCA DE
@@ -83,13 +91,3 @@ with col_bio:
         constantemente y combinar ciencia, tecnología y creatividad
         para resolver problemas.
         """)
-
-# COPYRIGHT
-st.divider()
-
-izquierda, centro, derecha = st.columns([1, 2, 1])
-with centro:
-    st.caption(
-        "© 2026 Cindy Estrada · CineArte · "
-        "[Creative Commons BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)"
-    )

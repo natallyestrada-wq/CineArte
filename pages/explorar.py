@@ -3,9 +3,14 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 
-from src.data import cargar_pelis
+from src.data import cargar_pelis, filtrar_peliculas
 from src.traduccion import traducir_texto, traducir_genero, traducir_idioma
 import src.figuras as fig
+
+#---------------------Para hacer debuging------------
+from pprint import pprint
+pprint(dict(st.session_state))
+#----------------------------------------------------
 
 ### CARGA DE DATOS
 # st.cache_data.clear() # forzar recarga de datos para que actualice el dataframe si se cambia el archivo CSV
@@ -24,7 +29,7 @@ if (
 
 
 ### ESTRUCTURA VISUAL DE LA PÁGINA
-st.header("🔍 Explorar")
+st.title("🔍 Explorar")
 
 ## FILTROS DE BÚSQUEDA
 # ------------------------------------------------------------------------------
@@ -51,37 +56,14 @@ with col3:
         placeholder="Ej. Tom Hanks",
     )
 
+pelis_filtradas = filtrar_peliculas(
+    pelis,
+    titulo= titulo_buscar,
+    generos= [search_genre], # se debe entregar tipo lista porque así lo espera la función
+    directores=search_director,
+    actores=search_cast
+)
 
-filtros = {  # filtros necesarios para aplicar al dataframe
-    "title": titulo_buscar,
-    "genres": search_genre,
-    "directors": search_director,
-    "cast": search_cast,
-}
-
-pelis_filtradas = (
-    pelis.copy()
-)  # copia del DataFrame original para aplicarle los filtros
-
-for column, value in filtros.items():  # filtrado
-    if value.strip():
-        pelis_filtradas = pelis_filtradas[
-            pelis_filtradas[column]
-            .fillna("")
-            .str.contains(
-                value.strip(),
-                case=False,
-                regex=False,
-            )
-        ]
-
-# pelis_filtradas[column]: selecciona la columna que se quiere buscar, por ejemplo, title.
-# .fillna(""): reemplaza los valores faltantes por texto vacío para evitar problemas.
-# .str.contains(...): comprueba si cada texto contiene lo que escribió el usuario.
-# value.strip(): busca el texto sin espacios sobrantes.
-# case=False: ignora mayúsculas y minúsculas.
-# regex=False: interpreta el texto como una búsqueda literal, no como una expresión regular.
-# pelis_filtradas[...]: conserva las filas donde la condición es verdadera.
 
 # PRESENTACIÓN DE RESULTADOS EN TABLA FILTRADA
 # ------------------------------------------------------------------------------
@@ -178,7 +160,7 @@ if eventos_tabla.selection.rows:  # si el usuario selecciona una fila
     col_izq, col_der = st.columns([1, 2])
     with col_izq:
         poster_url = f"https://image.tmdb.org/t/p/w500{peli['poster_path']}"
-        st.image(poster_url, use_container_width=True)
+        st.image(poster_url, width='stretch')
 
     with col_der:
         st.subheader(peli["title"])
@@ -191,8 +173,8 @@ if eventos_tabla.selection.rows:  # si el usuario selecciona una fila
 
         rating = f"⭐ Rating: {peli['averageRating']}"
         generos = f"🎭 Géneros: {traducir_genero(peli['genres'])}"
-        directores = f"👤Directores: {peli['directors']}"
-        guionistas = f"👥Guionistas: {peli['writers']}"
+        directores = f"👤 Directores: {peli['directors']}"
+        guionistas = f"👥 Guionistas: {peli['writers']}"
 
         st.markdown(
             f"""
@@ -206,7 +188,7 @@ if eventos_tabla.selection.rows:  # si el usuario selecciona una fila
 
         st.caption(f"**Reparto:** {peli['cast']}")
 
-        id_peli = peli["id"]
+        id_peli = int(peli["id"])
 
         # 1
         # if id_peli in st.session_state["pelis_ver"]:
@@ -219,14 +201,14 @@ if eventos_tabla.selection.rows:  # si el usuario selecciona una fila
         with boton_1:
             if id_peli in st.session_state["pelis_ver"]:
                 st.success("💾 Guardada en tu lista para ver")
-            elif st.button("💾 Guardar para ver", use_container_width=True):
+            elif st.button("💾 Guardar para ver", width="stretch"):
                 st.session_state["pelis_ver"].append(id_peli)
                 st.rerun()
 
         with boton_2:
             if id_peli in st.session_state["pelis_vistas"]:
                 st.success("✅ Marcada como vista")
-            elif st.button("✅ Ya la vi", use_container_width=True):
+            elif st.button("✅ Ya la vi", width="stretch"):
                 st.session_state["pelis_vistas"].append(id_peli)
                 st.rerun()
 else:
@@ -238,7 +220,8 @@ else:
 # ------------------------------------------------------------------------------
 if pelis_filtradas.shape[0] > 10:
     st.divider()
-    st.subheader(f"Estadísticas")
+    st.subheader(f"Estadísticas de {pelis_filtradas.shape[0]:,} películas")
+
 
     # -------- Resumen de los filtros aplicados --------
     filtros_activos = []
@@ -258,7 +241,7 @@ if pelis_filtradas.shape[0] > 10:
     if filtros_activos:
         st.info("**Filtros |** " + " | ".join(filtros_activos))
     else:
-        st.info("No hay filtros aplicados. Mostrando todas las películas.")
+        st.info("No hay filtros aplicados | Mostrando todas las películas.")
 
     # -------- Gráficos --------
     st.plotly_chart(fig.top_10_rating(pelis_filtradas))

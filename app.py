@@ -1,5 +1,11 @@
+### PREPARACIÓN DEL ENTORNO
 import streamlit as st
 from pathlib import Path
+
+#---------------------Para hacer debuging------------
+from pprint import pprint
+pprint(dict(st.session_state))
+#----------------------------------------------------
 
 RAIZ = Path(__file__).parent
 RUTA_LOGO = RAIZ / "assets" / "logo_color_frio.png"
@@ -12,7 +18,9 @@ st.set_page_config(
 )
 
 # st.sidebar.title("CineArte---")
-st.sidebar.image(RUTA_LOGO)
+# with st.sidebar:
+#     st.json(st.session_state)    # Para hacer debug de variables
+#     st.sidebar.image(RUTA_LOGO)
 
 pag = st.navigation(
     [

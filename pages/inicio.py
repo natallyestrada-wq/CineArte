@@ -17,7 +17,7 @@ st.caption("Creado con Python, Streamlit e información de Kaggle por Cindy Estr
 # SECCIONES
 st.divider()
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(3, vertical_alignment="bottom")
 
 with col1:
     st.subheader("🔍 Explorar")
@@ -41,8 +41,8 @@ with col2:
 with col3:
     st.subheader("🍿 Mi Cine")
     st.write(
-        "Crea tu propia lista de películas favoritas."
-        "Guarda las que has visto y las que quieres ver."
+        "Crea tu propia lista de películas favoritas"
+        " con las que has visto y las que quieres ver."
     )
     if st.button("Ir a Mi Cine", use_container_width=True):
         st.switch_page("pages/mi_cine.py")

@@ -22,6 +22,7 @@ def traducir_texto(texto, idioma_origen="en", idioma_destino="es"):
 
 
 def traducir_genero(genero):
+
     traducciones_generos = {
         "Action": "Acción",
         "Adventure": "Aventura",
@@ -43,6 +44,15 @@ def traducir_genero(genero):
         "War": "Guerra",
         "Western": "Western",
     }
+
+    if isinstance(genero, list):
+        generos_traducidos = []
+
+        for nombre in genero:
+            traduccion = traducciones_generos.get(nombre, nombre)
+            generos_traducidos.append(traduccion)
+
+        return generos_traducidos
 
     return traducciones_generos.get(genero, genero)
 

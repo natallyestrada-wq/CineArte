@@ -67,7 +67,7 @@ with col2:
     st.metric("Películas para ver", len(st.session_state["pelis_ver"]))
 with col3:
     st.metric("Partidas jugadas", st.session_state["partidas_jugadas"])
-# st.write(f"Contador: {st.session_state.contador}")
+
 
 # ACERCA DE
 st.divider()

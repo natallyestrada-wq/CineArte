@@ -42,7 +42,7 @@ def traducir_genero(genero):
         "TV Movie": "Película de TV",
         "Thriller": "Suspenso",
         "War": "Guerra",
-        "Western": "Western",
+        "Western": "Viejo Oeste",
     }
 
     if isinstance(genero, list):

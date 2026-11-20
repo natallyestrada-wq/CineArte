@@ -1,14 +1,34 @@
 import streamlit as st
+from src import traduccion as tr
+from src.data import URL_POSTER
+
+RONDAS_TOTALES = 4
 
 def marcar_ronda(i):
-    """Marca la ronda actual en la sesión de Streamlit."""
+    """Marca la ronda actual en la sesión de Streamlit.
+    
+    Parámetros: i, int, ronda actual
+            
+    """
     st.session_state["ronda_actual"] = i
+
+    if i == (RONDAS_TOTALES+1):
+        # mostrar globos de éxito porque se completó una partida   
+        st.balloons()
+        # registrar que se ha jugado una partida completa
+        st.session_state["partidas_jugadas"] += 1
+        # guardar el historial de pelis jugadas
+        ids_jugados = st.session_state["tabla_historial"]["id"].astype(int).tolist()         
+        st.session_state["pelis_jugadas"] = list(set(
+            ids_jugados + st.session_state["pelis_jugadas"]
+        ))
 
 def reiniciar_juego():
     """Finaliza la ronda actual y borra datos innecesarios."""
     conservar = ["pelis_ver", 
                  "pelis_vistas",
-                 "partidas_jugadas"
+                 "pelis_jugadas",
+                 "partidas_jugadas",
                  ]
     
     for key in list(st.session_state.keys()):
@@ -17,7 +37,7 @@ def reiniciar_juego():
 
     marcar_ronda(-1)
 
-def seleccionar_peli__duelo(df_duelos):
+def seleccionar_peli_duelo(df_duelos):
     """Función que escoge una película para
     enfrentar en el duelo cinéfilo según las preferencias
     y el historial del usuario.
@@ -29,8 +49,9 @@ def seleccionar_peli__duelo(df_duelos):
         Retorna None si no es posible formar el duelo.
         """
 
-    if not "pelis_excluidas" in st.session_state:
-        st.session_state["pelis_excluidas"] = st.session_state["pelis_vistas"]  
+    if "pelis_excluidas" not in st.session_state:
+        st.session_state["pelis_excluidas"] = (st.session_state["pelis_vistas"] +
+                                                st.session_state["pelis_ver"])
     
     ids_excluir = st.session_state["pelis_excluidas"]
 
@@ -53,25 +74,6 @@ def seleccionar_peli__duelo(df_duelos):
 
     return id_peli_duelo
 
-def dibujar_marco_duelos():
-    """Dibuja el marco de los duelos cinéfilos en la interfaz de usuario.
-    Crea un contenedores para mostrar las películas en duelo
-    y el resultado de la elección del usuario.
-    """
-
-    col1, col2, resultado = st.columns([1,1,2], border=True)
-
-    with col1:
-        caja1 = st.empty()
-
-    with col2:
-        caja2 = st.empty()
-
-    with resultado:
-        st.write("🏆 **GANADORA**")
-
-    return caja1, caja2, resultado
-
 def registrar_seleccion(id_peli_seleccionada):
 
     st.session_state["peli_ganadora"] = id_peli_seleccionada
@@ -82,3 +84,22 @@ def registrar_seleccion(id_peli_seleccionada):
     # Opción 2:
     marcar_ronda(st.session_state["ronda_actual"] + 1)
 
+def llenar_caja_duelo(caja1, info_peli, texto_boton):
+
+    with caja1.container(horizontal_alignment="center", vertical_alignment="bottom"):
+        url_poster = URL_POSTER + info_peli['poster_path']
+
+        with st.expander("Sinopsis"):
+            st.caption(tr.traducir_texto(info_peli["overview"]))
+
+        st.image(url_poster, width="stretch")
+        st.write(f"**{info_peli['title']}**") 
+
+        st.button(texto_boton, type="primary",
+                    on_click=registrar_seleccion, 
+                    args=[info_peli["id"]],
+                    width="stretch"
+                )      
+        
+        st.write(f"{info_peli['release_date'][0:4]} | {info_peli['runtime']} min")
+        st.write(f"{tr.traducir_idioma(info_peli['original_language'])} ⭐ {info_peli['averageRating']}")

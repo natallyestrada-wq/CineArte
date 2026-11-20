@@ -4,6 +4,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).parent.parent
 RUTA_MOVIES = RAIZ / "data" / "movies.csv"
+URL_POSTER = "https://image.tmdb.org/t/p/w500"
 
 ## FUCIÓN PARA LEER LA BASE DE DATOS Y CARGARLA A UN DATAFRAME
 @st.cache_data  # decorador para almacenar en caché los resultados de la función

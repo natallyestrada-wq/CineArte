@@ -3,7 +3,7 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 
-from src.data import cargar_pelis, filtrar_peliculas
+from src.data import cargar_pelis, filtrar_peliculas, URL_POSTER
 from src.traduccion import traducir_texto, traducir_genero, traducir_idioma
 import src.figuras as fig
 
@@ -159,8 +159,8 @@ if eventos_tabla.selection.rows:  # si el usuario selecciona una fila
 
     col_izq, col_der = st.columns([1, 2])
     with col_izq:
-        poster_url = f"https://image.tmdb.org/t/p/w500{peli['poster_path']}"
-        st.image(poster_url, width='stretch')
+        url_poster = URL_POSTER + peli['poster_path']
+        st.image(url_poster, width='stretch')
 
     with col_der:
         st.subheader(peli["title"])

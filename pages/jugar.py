@@ -1,6 +1,7 @@
 ### PREPARACIÓN DEL ENTORNO
 import streamlit as st
-from src.data import cargar_pelis, filtrar_peliculas
+import pandas as pd
+from src.data import cargar_pelis, filtrar_peliculas, URL_POSTER
 from src import traduccion as tr
 from src import juego as jg
 
@@ -9,16 +10,24 @@ from src import juego as jg
 pelis = cargar_pelis()
 
 ### CONFIGURACIÓN
-RONDAS = 4
+RONDAS_TOTALES = jg.RONDAS_TOTALES # cantidad de rondas totales de una partida
 
-URL_POSTER = "https://image.tmdb.org/t/p/w500"
+COLUMNAS_DF = {
+    "id": "id",
+    "title": "🎬 Película",
+    "genres": "🎭 Géneros",
+    "directors": "👤 Directores",
+    "averageRating": "⭐ Rating",
+    'runtime': "⌛ Duración",
+    "release_date": "📅 Año",
+}
 
 ### INICIALIZACIÓN DE VARIABLES DE SESIÓN
 # 1. Definir diccionario con el estado inicial 
 estado_inicial = {
-    "pelis_excluidas": [], 
     "pelis_ver": [],  # Películas que el usuario quiere ver
     "pelis_vistas": [],  # Películas que el usuario ya vio
+    "pelis_jugadas": [],
     "partidas_jugadas": 0,  # Contador de partidas totales
     "ronda_actual": -1,  # Índice de la ronda en curso
 }
@@ -33,7 +42,7 @@ for clave, valor_defecto in estado_inicial.items():
 st.markdown("# 🎲 ¡Juguemos a Duelo cinéfilo!")
 st.write("**Tendrás cuatro duelos para descubrir tu próxima película.**")
 st.caption("Cuéntanos qué tipo de películas te gustaría descubrir:")
-
+st.divider()
 
 ## PANTALLA DE PREFERENCIAS
 # ------------------------------------------------------------------------------
@@ -136,6 +145,7 @@ duracion_seleccionada = opciones_duracion[duracion_seleccionada]
 
 ## PANTALLA DE DUELOS
 # ------------------------------------------------------------------------------
+st.divider()
 if st.session_state['ronda_actual'] == -1:
     st.button("¡Comenzar los duelos!",  # texto del botón
               type="primary",           # estilo del botón
@@ -143,12 +153,6 @@ if st.session_state['ronda_actual'] == -1:
               on_click=jg.marcar_ronda, # llama la función marcar_ronda() del módulo juego.py
               args=[0]                 # le manda el argumento a la función
     )
-else:
-    st.button("Empezar de cero",  
-              type="primary",
-              width="stretch",
-              on_click=jg.reiniciar_juego,
-            )
 
 if st.session_state.ronda_actual == 0:
     df_duelos = filtrar_peliculas(
@@ -163,153 +167,183 @@ if st.session_state.ronda_actual == 0:
         excluir_adultos=excluir_adultos
     )
 
-    id_primera_contrincante = jg.seleccionar_peli__duelo(df_duelos)
+    id_primera_contrincante = jg.seleccionar_peli_duelo(df_duelos)
 
-    if id_primera_contrincante:
+    if id_primera_contrincante and len(df_duelos)>= (RONDAS_TOTALES+1):
         jg.marcar_ronda(1) # indicar que se pasa a la ronda 1
 
+        # Guardar vbles de sesión necesarias para las siguientes rondas
         st.session_state["df_duelos"] = df_duelos
         st.session_state["peli_ganadora"] = id_primera_contrincante
+
+        tabla_historial = df_duelos.loc[
+            df_duelos["id"] == id_primera_contrincante,
+            COLUMNAS_DF.keys()
+            ].rename(columns=COLUMNAS_DF)
+        
+        st.session_state["tabla_historial"] = tabla_historial
+        
     else:
         st.warning("🥴 No hay suficientes películas para formar un duelo. "
             "Por favor, ajusta tus preferencias y vuelve a intentarlo.")
         jg.reiniciar_juego()
 
 
-if st.session_state.ronda_actual >= 1 and st.session_state["ronda_actual"] <= 4:
-    st.caption(" En cada duelo verás dos películas y deberás elegir la que más te llame la atención.")
-    st.subheader(f"⚔️ Ronda {st.session_state["ronda_actual"]} de {RONDAS}")
-    st.progress(st.session_state["ronda_actual"] / RONDAS+1)
+if st.session_state.ronda_actual >= 1 and st.session_state["ronda_actual"] <= RONDAS_TOTALES:
+    st.info(" En cada duelo verás dos películas y deberás elegir la que más te llame la atención.")
+
+
+    # dibuja el marco de los duelos en la interfaz de usuario
+    col1, col2 = st.columns(2)
+
+    with col1:
+        col3, col4 = st.columns(2, border=True)
+        with col3:
+            caja1 = st.empty()
+        with col4:
+            caja2 = st.empty()  
+    with col2:
+        caja3 = st.empty()
     
-    caja1, caja2, resultado = jg.dibujar_marco_duelos()  # dibuja el marco de los duelos en la interfaz de usuario
 
     # extraer par de pelis para el duelo
     id_izquierda = st.session_state["peli_ganadora"]
-    id_derecha = jg.seleccionar_peli__duelo(st.session_state["df_duelos"])
+    id_derecha = jg.seleccionar_peli_duelo(st.session_state["df_duelos"])
 
-    # llenar cajones con datos
-    with caja1.container(horizontal_alignment="center", vertical_alignment="bottom"):
-        info_peli = pelis[pelis['id'] == id_izquierda].iloc[0]
-        url_poster = URL_POSTER + info_peli['poster_path']
-
-        if st.button("👈 Quiero esta", type="primary",
-                        on_click=jg.registrar_seleccion, 
-                        args=[id_izquierda],
-                        width="stretch"):
-            st.rerun()
-
-        with st.expander("Sinopsis"):
-            st.caption(tr.traducir_texto(info_peli["overview"]))
-
-        st.image(url_poster, width="stretch")
-        st.write(f"**{info_peli['title']}**") 
-        st.write(f"{info_peli['release_date'][0:4]} | {info_peli['runtime']} min")
-        st.write(f"{tr.traducir_idioma(info_peli['original_language'])} ⭐ {info_peli['averageRating']}")
+    # extraer df de historial
+    tabla_historial = st.session_state["tabla_historial"] 
 
 
+    # LLENAR CAJAS
+    # caja 1
+    info_peli = pelis[pelis['id'] == id_izquierda].iloc[0]  # extraer Serie de la peli
+    jg.llenar_caja_duelo(caja1, info_peli, "☝️ Quiero esta")
 
-    with caja2.container(horizontal_alignment="center", vertical_alignment="bottom"):
-        info_peli = pelis[pelis['id'] == id_derecha].iloc[0]
-        url_poster = URL_POSTER + info_peli['poster_path']
+    # caja 2
+    info_peli = pelis[pelis['id'] == id_derecha].iloc[0]  # extraer Serie de la peli
+    jg.llenar_caja_duelo(caja2, info_peli, "Prefiero esta ☝️")
 
-        if st.button("Prefiero esta 👉", type="primary",
-                        on_click=jg.registrar_seleccion, 
-                        args=[id_derecha],
-                        width="stretch"):
-            st.rerun()
+    # Guardar info para el historial de la partida
+    info_peli_der = info_peli.loc[
+        COLUMNAS_DF.keys()
+        ].rename(index=COLUMNAS_DF)
 
-        with st.expander("Sinopsis"):
-            st.caption(tr.traducir_texto(info_peli["overview"]))
+    tabla_historial = pd.concat(  # completar el historial con nueva peli
+        [tabla_historial, info_peli_der.to_frame().T],
+        ignore_index=True
+    )
 
-        st.image(url_poster, width="stretch")
-        st.write(f"**{info_peli['title']}**") 
-        st.write(f"{info_peli['release_date'][0:4]} | {info_peli['runtime']} min")
-        st.write(f"{tr.traducir_idioma(info_peli['original_language'])} ⭐ {info_peli['averageRating']}")
+    st.session_state["tabla_historial"] = tabla_historial
 
-        # Guardar info para el momento en que se acaben las rondas
-        st.session_state["id_izquierda"] = id_izquierda
-        st.session_state["id_derecha"] = id_derecha
+    # caja 3
+    with caja3.container():
+        st.subheader(f"⚔️ Ronda {st.session_state['ronda_actual']} de {RONDAS_TOTALES}")
+        st.progress(st.session_state["ronda_actual"] / (RONDAS_TOTALES+1))
+        st.markdown("**Historial de duelos**",
+                    help = "Desliza a la derecha 👉")
 
-if st.session_state.ronda_actual==5:
-
-    # recuperar variables
-    id_izquierda = st.session_state["id_izquierda"]
-    id_derecha = st.session_state["id_derecha"] 
- 
-    st.caption("Duelo terminado")
-    st.subheader(f"⚔️ ¡Hemos encontrado una ganadora!")
-    st.progress(100)
-
-    caja1, caja2, resultado = jg.dibujar_marco_duelos()  # dibuja el marco de los duelos en la interfaz de usuario
-
-    # extraer par de pelis para el duelo
-    # llenar cajones con datos
-    with caja1.container(horizontal_alignment="center", vertical_alignment="bottom"):
-        info_peli = pelis[pelis['id'] == id_izquierda].iloc[0]
-        url_poster = URL_POSTER + info_peli['poster_path']
-
-        with st.expander("Sinopsis"):
-            st.caption(tr.traducir_texto(info_peli["overview"]))
-
-        st.image(url_poster, width="stretch")
-        st.write(f"**{info_peli['title']}**") 
-        st.write(f"{info_peli['release_date'][0:4]} | {info_peli['runtime']} min")
-        st.write(f"{tr.traducir_idioma(info_peli['original_language'])} ⭐ {info_peli['averageRating']}")
-
-
-
-    with caja2.container(horizontal_alignment="center", vertical_alignment="bottom"):
-        info_peli = pelis[pelis['id'] == id_derecha].iloc[0]
-        url_poster = URL_POSTER + info_peli['poster_path']
-
-        with st.expander("Sinopsis"):
-            st.caption(tr.traducir_texto(info_peli["overview"]))
-
-        st.image(url_poster, width="stretch")
-        st.write(f"**{info_peli['title']}**") 
-        st.write(f"{info_peli['release_date'][0:4]} | {info_peli['runtime']} min")
-        st.write(f"{tr.traducir_idioma(info_peli['original_language'])} ⭐ {info_peli['averageRating']}")
-
-
-    with resultado:
-        id_ganadora = st.session_state["peli_ganadora"]
-        info_peli = pelis[pelis['id'] == id_ganadora].iloc[0]
-
-        col1, col2 = st.columns(2)
-
-        with col1:   
-            url_poster = URL_POSTER + info_peli['poster_path']
-            st.image(url_poster, width="stretch")
-        with col2:
-            st.write(f"**{info_peli['title']}**") 
-            st.write(f"{info_peli['release_date'][0:4]} | {info_peli['runtime']} min")
-            st.write(f"{tr.traducir_idioma(info_peli['original_language'])} ⭐ {info_peli['averageRating']}")
-
+        st.dataframe(
+            tabla_historial,
+            width="stretch",
+            hide_index=True,
+            column_config={"id": None},  # Oculta la columna "id" de la tabla
+        )
 
     
 
+if st.session_state.ronda_actual == (RONDAS_TOTALES + 1):
+    # dibuja el marco de los resultados
+    col1, col2 = st.columns(2)
 
-if st.session_state.ronda_actual>5645:
-    st.write('Terminamos')
-    st.session_state.partidas_jugadas += 1
-    st.write("Tu peli recomendada es -------")
-#? función ? mostrar ganadora
-    id_ganadora ="ññññññññññññ"
+    with col1:
+        with st.container(border=True):
+            id_ganadora = st.session_state["peli_ganadora"]
+            info_peli = pelis[pelis['id'] == id_ganadora].iloc[0]
 
-    boton_1, boton_2 = st.columns(2)
-    with boton_1:
-        if id_ganadora in st.session_state["pelis_ver"]:
-            st.success("💾 Guardada en tu lista para ver")
-        elif st.button("💾 Guardar para ver", width="stretch"):
-            st.session_state["pelis_ver"].append(id_ganadora)
-            st.rerun()
+            st.subheader(f"🏆 Ganadora: {info_peli["title"]}")           
+            if pd.notna(info_peli["tagline"]):                  # si no es vacío
+                st.caption(tr.traducir_texto(info_peli["tagline"]))
+            st.write(tr.traducir_texto(info_peli["overview"]))
 
-    with boton_2:
-        if id_ganadora in st.session_state["pelis_vistas"]:
-            st.success("✅ Marcada como vista")
-        elif st.button("✅ Ya la vi", width="stretch"):
-            st.session_state["pelis_vistas"].append(id_ganadora)
-            st.rerun()
+            col_izq, col_der = st.columns([1, 2])
+            with col_izq:
+                url_poster = URL_POSTER + info_peli['poster_path']
+                st.image(url_poster, width="stretch")
+
+            with col_der:
+
+                anho = f"📅 Lanzamiento: {info_peli['release_date'][0:4]}"
+                duracion_idioma = f"⌛ {info_peli['runtime']} minutos 🗣️ {tr.traducir_idioma(info_peli['original_language'])}"
+
+                rating = f"⭐ Rating: {info_peli['averageRating']}"
+                generos = f"🎭 Géneros: {tr.traducir_genero(info_peli['genres'])}"
+                directores = f"👤 Directores: {info_peli['directors']}"
+                guionistas = f"👥 Guionistas: {info_peli['writers']}"
+
+                st.markdown(
+                    f"""
+                    |||
+                    | :--- | :--- | 
+                    | {anho} | {duracion_idioma} |
+                    | {rating} | {generos} | 
+                    | {directores} | {guionistas} | 
+                    """,
+                )
+
+            st.caption(f"**Reparto:** {info_peli['cast']}")
+
+            boton_1, boton_2 = st.columns(2)
+            with boton_1:
+                if id_ganadora in st.session_state["pelis_ver"]:
+                    st.success("💾 Guardada en tu lista para ver")
+                elif st.button("💾 Guardar para ver", width="stretch"):
+                    st.session_state["pelis_ver"].append(id_ganadora)
+                    st.rerun()
+
+            with boton_2:
+                if id_ganadora in st.session_state["pelis_vistas"]:
+                    st.success("✅ Marcada como vista")
+                elif st.button("✅ Ya la vi", width="stretch"):
+                    st.session_state["pelis_vistas"].append(id_ganadora)
+                    st.rerun()
+
+    with col2:
+        
+        tabla_historial = st.session_state["tabla_historial"] 
+
+        st.subheader(f"⚔️ Partida finalizada")
+        st.progress(st.session_state["ronda_actual"] / (RONDAS_TOTALES+1))
+        st.markdown("**Historial de duelos**",
+                    help = "Desliza a la derecha 👉")
+        st.dataframe(
+            tabla_historial,
+            width="stretch",
+            hide_index=True,
+            column_config={"id": None},  # Oculta la columna "id" de la tabla
+        )
+
+        st.button("🎲 ¡Volver a jugar!",  
+                type="primary",
+                width="stretch",
+                on_click=jg.reiniciar_juego,
+                )
+
+        st.markdown("**Tus estadísticas**")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Películas vistas", len(st.session_state["pelis_vistas"]))
+        with col2:
+            st.metric("Películas para ver", len(st.session_state["pelis_ver"]))
+        with col3:
+            st.metric("Partidas jugadas", st.session_state["partidas_jugadas"])
+
+        if st.button("🍿 Ir a Mi Cine",
+                    type="secondary",
+                    width="stretch",
+                    ):
+            
+            st.switch_page("pages/mi_cine.py")
 
 
 

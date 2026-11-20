@@ -17,10 +17,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# st.sidebar.title("CineArte---")
-# with st.sidebar:
-#     st.json(st.session_state)    # Para hacer debug de variables
-#     st.sidebar.image(RUTA_LOGO)
+with st.sidebar:
+    #st.json(st.session_state)    # Para hacer debug de variables
+    st.sidebar.image(RUTA_LOGO)
+
 
 pag = st.navigation(
     [
@@ -44,3 +44,9 @@ with centro:
         "© 2026 Cindy Estrada · CineArte · "
         "[Creative Commons BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)"
     )
+
+
+# Index(['id', 'title', 'release_date', 'runtime', 'adult', 'original_language',
+#        'overview', 'popularity', 'poster_path', 'tagline', 'genres',
+#        'keywords', 'directors', 'writers', 'averageRating', 'cast'],
+#       dtype='str')

@@ -2,249 +2,267 @@
 import streamlit as st
 import pandas as pd
 
-from src.data import cargar_pelis, URL_POSTER
+from src.data import cargar_pelis, inicializar_sesion
 from src.traduccion import traducir_texto, traducir_genero, traducir_idioma
-
+from src.config import URL_POSTER
 
 ### CARGA DE DATOS
 pelis = cargar_pelis()
 
-
 ### INICIALIZACIÓN DE VARIABLES DE SESIÓN
-for lista in ["pelis_ver", "pelis_vistas", "pelis_jugadas"]:
-    if lista not in st.session_state:
-        st.session_state[lista] = []
+inicializar_sesion()
 
-# ids_mi_cine = set(
-#     st.session_state["pelis_vistas"]
-#     + st.session_state["pelis_ver"]
-#     + st.session_state["pelis_jugadas"]
-# )
+if "peli_seleccionada" not in st.session_state:
+    st.session_state["peli_seleccionada"] = None
+
+if "version_tabla" not in st.session_state:
+    st.session_state["version_tabla"] = 0
+
 
 ### CONFIGURACIÓN DE CATEGORÍAS
 CATEGORIAS = {
     "Vista": "pelis_vistas",
     "Por ver": "pelis_ver",
-    "Jugada": "pelis_jugadas"
+    "Jugada": "pelis_jugadas",
 }
 
 
 ### FUNCIONES AUXILIARES
-
 def mostrar_valor(valor):
     """Controla los valores vacíos del DataFrame."""
-
-    if pd.isna(valor):
+    if pd.isna(valor) or valor is None or str(valor).strip() == "":
         return "No disponible"
-
     return str(valor)
 
 
 def obtener_pelis_usuario():
     """Obtiene las películas pertenecientes a las listas del usuario."""
-
     ids_usuario = set()
-
     for lista in CATEGORIAS.values():
-        ids_usuario.update(
-            str(id_peli) for id_peli in st.session_state[lista]
-        )
+        ids_usuario.update(str(id_peli) for id_peli in st.session_state[lista])
 
     if not ids_usuario:
         return pelis.iloc[0:0].copy()
 
-    resultado = pelis[
-        pelis["id"].astype(str).isin(ids_usuario)
-    ].copy()
-
-    # Evitar películas duplicadas
+    resultado = pelis[pelis["id"].astype(str).isin(ids_usuario)].copy()
     resultado = resultado.drop_duplicates(subset="id")
 
-    # Crear columnas booleanas
     for categoria, lista in CATEGORIAS.items():
-
-        ids_lista = {
-            str(id_peli)
-            for id_peli in st.session_state[lista]
-        }
-
-        resultado[categoria] = (
-            resultado["id"].astype(str).isin(ids_lista)
-        )
+        ids_lista = {str(id_peli) for id_peli in st.session_state[lista]}
+        resultado[categoria] = resultado["id"].astype(str).isin(ids_lista)
 
     return resultado.reset_index(drop=True)
 
 
+def agregar_pelicula(id_peli, lista):
+    """Agrega una película evitando duplicados."""
+    ids_existentes = {str(x) for x in st.session_state[lista]}
+    if str(id_peli) not in ids_existentes:
+        st.session_state[lista].append(int(id_peli))
+
+
 def eliminar_pelicula(id_peli, lista):
     """Elimina una película de una categoría específica."""
-
     st.session_state[lista] = [
-        id_actual
-        for id_actual in st.session_state[lista]
-        if str(id_actual) != str(id_peli)
+        x for x in st.session_state[lista] if str(x) != str(id_peli)
     ]
 
-    st.rerun()
+
+# --- Callbacks de los botones ---
+def accion_quitar(id_peli, lista):
+    eliminar_pelicula(id_peli, lista)
+    # Reinicia la selección visual de la tabla para que no arrastre el índice anterior
+    st.session_state["version_tabla"] += 1
+
+
+def accion_cambiar_estado(id_peli, nuevo_estado):
+    """Cambia entre Vista y Por ver (mutuamente excluyentes) manteniendo la selección."""
+    if nuevo_estado == "vista":
+        eliminar_pelicula(id_peli, "pelis_ver")
+        agregar_pelicula(id_peli, "pelis_vistas")
+    elif nuevo_estado == "por_ver":
+        eliminar_pelicula(id_peli, "pelis_vistas")
+        agregar_pelicula(id_peli, "pelis_ver")
+
+    st.session_state["peli_seleccionada"] = str(id_peli)
+    st.session_state["version_tabla"] += 1
 
 
 ### ESTRUCTURA VISUAL DE LA PÁGINA
-
 st.title("🍿 Mi Cine")
+st.write("**Esta es tu propia lista de películas favoritas.**")
+st.caption("Selecciona una de la tabla para administrarla")
+st.divider()
 
 ## TABLA DE PELÍCULAS
 # ------------------------------------------------------------------------------
-
 pelis_usuario = obtener_pelis_usuario()
 
 if pelis_usuario.empty:
-
+    st.session_state["peli_seleccionada"] = None
     st.info("Todavía no tienes películas en Mi Cine.")
 
 else:
-
     st.subheader(f"{len(pelis_usuario):,} películas en tu colección")
 
     nombres_columnas = {
         "id": "id",
         "title": "🎬 Película",
-        "release_date": "📅 Lanzamiento",
-        "runtime": "⌛ Duración",
-        "averageRating": "⭐ Rating",
-        "genres": "🎭 Géneros",
         "Vista": "👁️ Vista",
         "Por ver": "📌 Por ver",
-        "Jugada": "🎲 Jugada"
+        "Jugada": "🎲 Jugada",
+        "release_date": "📅 Lanzamiento",
+        "directors": "👤 Directores",
+        "averageRating": "⭐ Rating",
+        "genres": "🎭 Géneros",
     }
 
-    tabla_mostrar = (
-        pelis_usuario[list(nombres_columnas.keys())]
-        .rename(columns=nombres_columnas)
+    tabla_mostrar = pelis_usuario[list(nombres_columnas.keys())].rename(
+        columns=nombres_columnas
     )
 
     eventos_tabla = st.dataframe(
         tabla_mostrar,
+        key=f"tabla_mi_cine_{st.session_state['version_tabla']}",
         width="stretch",
         hide_index=True,
         on_select="rerun",
         selection_mode="single-row",
         column_config={
-            "id": None
-        }
+            "id": None,
+            "👁️ Vista": st.column_config.CheckboxColumn("👁️ Vista", disabled=True),
+            "📌 Por ver": st.column_config.CheckboxColumn("📌 Por ver", disabled=True),
+            "🎲 Jugada": st.column_config.CheckboxColumn("🎲 Jugada", disabled=True),
+        },
     )
 
-
-    ## DETALLES DE LA PELÍCULA SELECCIONADA
-    # --------------------------------------------------------------------------
-
+    # Actualizar selección solo cuando el usuario hace clic en una fila de la tabla
     if eventos_tabla.selection.rows:
-
         indice = eventos_tabla.selection.rows[0]
-        peli = pelis_usuario.iloc[indice]
+        st.session_state["peli_seleccionada"] = str(tabla_mostrar.iloc[indice]["id"])
 
-        st.divider()
-        st.info("🍿 Esta es la película seleccionada:")
 
-        col_izq, col_der = st.columns([1, 2])
+## DETALLES DE LA PELÍCULA SELECCIONADA
+# ------------------------------------------------------------------------------
+id_seleccionado = st.session_state.get("peli_seleccionada")
 
-        with col_izq:
+peli_seleccionada = (
+    pelis_usuario[pelis_usuario["id"].astype(str) == str(id_seleccionado)]
+    if id_seleccionado
+    else pelis_usuario.iloc[0:0]
+)
 
-            poster = peli["poster_path"]
+if not peli_seleccionada.empty:
+    peli = peli_seleccionada.iloc[0]
 
-            if pd.notna(poster) and str(poster).strip():
+    st.divider()
 
-                st.image(
-                    URL_POSTER + str(poster),
-                    width="stretch"
-                )
+    listas_pelicula = [
+        categoria for categoria in CATEGORIAS if peli[categoria]
+    ]
 
-            else:
-                st.info("Póster no disponible.")
+    st.info("🍿 **Esta película pertenece a:** " + " | ".join(listas_pelicula))
 
-        with col_der:
+    col_izq, col_der = st.columns([1, 2])
 
-            st.subheader(mostrar_valor(peli["title"]))
+    with col_izq:
+        if pd.notna(peli['poster_path']):
+            url_poster = URL_POSTER + peli['poster_path']
+            st.image(url_poster, width='stretch')
 
-            tagline = peli["tagline"]
+    with col_der:
+        st.subheader(peli["title"])
+        if pd.notna(peli["tagline"]):  # si no es vacío
+            st.caption(traducir_texto(peli["tagline"]))
+        st.write(traducir_texto(peli["overview"]))
 
-            if pd.notna(tagline) and str(tagline).strip():
-                st.caption(traducir_texto(tagline))
+        anho = f"📅 Lanzamiento: {str(peli['release_date'])[0:4]}"
+        duracion_idioma = f"⌛ {peli['runtime']} minutos 🗣️ {traducir_idioma(peli['original_language'])}"
 
-            st.write(traducir_texto(mostrar_valor(peli["overview"])))
+        rating = f"⭐ Rating: {peli['averageRating']}"
+        generos = f"🎭 Géneros: {traducir_genero(peli['genres'])}"
+        directores = f"👤 Directores: {peli['directors']}"
+        guionistas = f"👥 Guionistas: {peli['writers']}"
 
-            # Información general
-            fecha = peli["release_date"]
+        st.markdown(
+            f"""
+            |||
+            | :--- | :--- | 
+            | {anho} | {duracion_idioma} |
+            | {rating} | {generos} | 
+            | {directores} | {guionistas} | 
+            """,
+        )
 
-            anho = (
-                str(fecha)[:4]
-                if pd.notna(fecha)
-                else "No disponible"
+        st.caption(f"**Reparto:** {peli['cast']}")
+
+        id_peli = int(peli["id"])
+
+    ## ADMINISTRACIÓN DE LA PELÍCULA
+    # ----------------------------------------------------------------------
+    st.divider()
+    st.write("**Administrar película:**")
+
+    id_peli = peli["id"]
+    botones = st.columns(3)
+
+    # 1. Vista
+    with botones[0]:
+        if peli["Vista"]:
+            st.button(
+                "🗑️ Quitar de Vista",
+                key=f"quitar_vista_{id_peli}",
+                on_click=accion_quitar,
+                args=(id_peli, "pelis_vistas"),
+                width="stretch",
+            )
+        else:
+            st.button(
+                "✅ Marcar como vista",
+                key=f"marcar_vista_{id_peli}",
+                on_click=accion_cambiar_estado,
+                args=(id_peli, "vista"),
+                width="stretch",
             )
 
-            duracion = mostrar_valor(peli["runtime"])
-
-            rating = mostrar_valor(peli["averageRating"])
-
-            idioma = traducir_idioma(
-                mostrar_valor(peli["original_language"])
+    # 2. Por ver
+    with botones[1]:
+        if peli["Por ver"]:
+            st.button(
+                "🗑️ Quitar de Por ver",
+                key=f"quitar_por_ver_{id_peli}",
+                on_click=accion_quitar,
+                args=(id_peli, "pelis_ver"),
+                width="stretch",
+            )
+        else:
+            st.button(
+                "💾 Guardar para ver",
+                key=f"guardar_por_ver_{id_peli}",
+                on_click=accion_cambiar_estado,
+                args=(id_peli, "por_ver"),
+                width="stretch",
             )
 
-            generos = traducir_genero(
-                mostrar_valor(peli["genres"])
+    # 3. Jugada
+    with botones[2]:
+        if peli["Jugada"]:
+            st.button(
+                "🗑️ Quitar de Jugada",
+                key=f"quitar_jugada_{id_peli}",
+                on_click=accion_quitar,
+                args=(id_peli, "pelis_jugadas"),
+                width="stretch",
             )
+        else:
+            if st.button(
+                "🎲 Ir a jugar",
+                key=f"ir_jugar_{id_peli}",
+                width="stretch",
+            ):
+                st.switch_page("pages/jugar.py")
 
-            directores = mostrar_valor(peli["directors"])
-            guionistas = mostrar_valor(peli["writers"])
-
-            st.markdown(
-                f"""
-                |||
-                | :--- | :--- |
-                | 📅 Lanzamiento: {anho} | ⌛ {duracion} minutos |
-                | ⭐ Rating: {rating} | 🗣️ {idioma} |
-                | 🎭 Géneros: {generos} | |
-                | 👤 Directores: {directores} | |
-                | ✍️ Guionistas: {guionistas} | |
-                """
-            )
-
-            st.caption(
-                f"**Reparto:** {mostrar_valor(peli['cast'])}"
-            )
-
-            st.caption(
-                f"**Palabras clave:** {mostrar_valor(peli['keywords'])}"
-            )
-
-
-        ## BOTONES PARA ELIMINAR DE CADA CATEGORÍA
-        # ----------------------------------------------------------------------
-
-        st.write("**Administrar película:**")
-
-        id_peli = peli["id"]
-
-        botones = st.columns(3)
-
-        for col, (categoria, lista) in zip(
-            botones,
-            CATEGORIAS.items()
-        ):
-
-            if id_peli in st.session_state[lista]:
-
-                with col:
-
-                    if st.button(
-                        f"🗑️ Quitar de {categoria}",
-                        key=f"quitar_{lista}_{id_peli}",
-                        width="stretch"
-                    ):
-
-                        eliminar_pelicula(id_peli, lista)
-
-    else:
-
+else:
+    st.session_state["peli_seleccionada"] = None
+    if not pelis_usuario.empty:
         st.info("👆 Selecciona una película de la tabla para ver sus detalles.")
-
-
-

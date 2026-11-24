@@ -1,17 +1,20 @@
 ### PREPARACIÓN DEL ENTORNO
+# Librerías externas:
 import streamlit as st
 import pandas as pd
-from src.data import cargar_pelis, filtrar_peliculas, URL_POSTER
+
+# Módulos propios
 from src import traduccion as tr
 from src import juego as jg
+from src.data import cargar_pelis, filtrar_peliculas, inicializar_sesion
 
+# Variables globales
+from src.config import URL_POSTER, RONDAS_TOTALES
 
-### CARGA DE DATOS
+# Carga de datos
 pelis = cargar_pelis()
 
-### CONFIGURACIÓN
-RONDAS_TOTALES = jg.RONDAS_TOTALES # cantidad de rondas totales de una partida
-
+# Otras variables
 COLUMNAS_DF = {
     "id": "id",
     "title": "🎬 Película",
@@ -22,21 +25,19 @@ COLUMNAS_DF = {
     "release_date": "📅 Año",
 }
 
-### INICIALIZACIÓN DE VARIABLES DE SESIÓN
-# 1. Definir diccionario con el estado inicial 
-estado_inicial = {
-    "pelis_ver": [],  # Películas que el usuario quiere ver
-    "pelis_vistas": [],  # Películas que el usuario ya vio
-    "pelis_jugadas": [],
-    "partidas_jugadas": 0,  # Contador de partidas totales
-    "ronda_actual": -1,  # Índice de la ronda en curso
-}
+## INICIALIZACIÓN DE VARIABLES
+# Variables generales:
+inicializar_sesion()
 
-# 2. Inicializar todas las variables
-for clave, valor_defecto in estado_inicial.items():
-  if clave not in st.session_state:
-    st.session_state[clave] = valor_defecto
+# Si no se ha iniciado la partida, la ronda empieza en -1
+if "ronda_actual" not in st.session_state:
+    st.session_state["ronda_actual"] = -1
 
+# Variable que activa o desactiva los botones de filtrado
+if st.session_state["ronda_actual"] == -1:
+    st.session_state["bloquear_filtros"] = False
+else:
+    st.session_state["bloquear_filtros"] = True
 
 ### ESTRUCTURA VISUAL DE LA PÁGINA
 st.markdown("# 🎲 ¡Juguemos a Duelo cinéfilo!")
@@ -96,13 +97,15 @@ with col1:
         "¿Qué duración prefieres?",
         list(opciones_duracion.keys()),
         index=len(opciones_duracion)-1, # Por defecto selecciona "Sin preferencia"
+        disabled= st.session_state["bloquear_filtros"], # Para activar o desactivar los botones
     )
 
 with col2:
     valoracion_seleccionada = st.radio(
         "¿Qué tipo de películas prefieres?",
         opciones_valoracion,
-        index=len(opciones_valoracion)-1
+        index=len(opciones_valoracion)-1,
+        disabled= st.session_state["bloquear_filtros"]
     )
 
 with col3:
@@ -114,7 +117,8 @@ experiencias_seleccionadas = st.pills(
     opciones_experiencia.keys(),
     selection_mode = "multi",
     width="stretch",
-    wrap=True,       
+    wrap=True,   
+    disabled= st.session_state["bloquear_filtros"]   
 )
 
 # Recálculo de variables según las selecciones del usuario
@@ -135,6 +139,8 @@ for experiencia in experiencias_seleccionadas:
     for genero in generos:
         if genero not in generos_seleccionados:
             generos_seleccionados.append(genero)
+else:
+    generos_seleccionados = [""]
 
 duracion_seleccionada = opciones_duracion[duracion_seleccionada]
 
@@ -190,7 +196,7 @@ if st.session_state.ronda_actual == 0:
 
 
 if st.session_state.ronda_actual >= 1 and st.session_state["ronda_actual"] <= RONDAS_TOTALES:
-    st.info(" En cada duelo verás dos películas y deberás elegir la que más te llame la atención.")
+    st.info("⬇️ En cada duelo verás dos películas y deberás elegir la que más te llame la atención.")
 
 
     # dibuja el marco de los duelos en la interfaz de usuario

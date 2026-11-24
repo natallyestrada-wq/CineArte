@@ -1,15 +1,11 @@
 ### PREPARACIÓN DEL ENTORNO
+# Librerías externas:
 import streamlit as st
-from pathlib import Path
 
-#---------------------Para hacer debuging------------
-from pprint import pprint
-pprint(dict(st.session_state))
-#----------------------------------------------------
+# Variables globales
+from src.config import RUTA_LOGO
 
-RAIZ = Path(__file__).parent
-RUTA_LOGO = RAIZ / "assets" / "logo_color_frio.png"
-
+### ESTRUCTURA VISUAL DE LA PÁGINA
 st.set_page_config(
     page_title="CineArte",
     page_icon="🎬",
@@ -19,7 +15,12 @@ st.set_page_config(
 
 with st.sidebar:
     #st.json(st.session_state)    # Para hacer debug de variables
-    st.sidebar.image(RUTA_LOGO)
+    st.image(RUTA_LOGO)
+
+#---------------------Para hacer debuging------------
+# from pprint import pprint
+# pprint(dict(st.session_state))
+#----------------------------------------------------
 
 
 pag = st.navigation(
@@ -28,7 +29,7 @@ pag = st.navigation(
         st.Page("pages/explorar.py", title="Explorar", icon="🔍"),
         st.Page("pages/jugar.py", title="Jugar", icon="🎲"),
         st.Page("pages/mi_cine.py", title="Mi Cine", icon="🍿"),
-        st.Page("pages/pruebas.py", title="Pruebas", icon="🚧"),
+        #st.Page("pages/pruebas.py", title="Pruebas", icon="🚧"),
     ],
 )
 
@@ -46,7 +47,3 @@ with centro:
     )
 
 
-# Index(['id', 'title', 'release_date', 'runtime', 'adult', 'original_language',
-#        'overview', 'popularity', 'poster_path', 'tagline', 'genres',
-#        'keywords', 'directors', 'writers', 'averageRating', 'cast'],
-#       dtype='str')

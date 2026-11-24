@@ -1,9 +1,17 @@
+# MÓDULO JUEGO.PY
+# Contiene funciones para administración del juego en JUGAR.PY
+
+### PREPARACIÓN DEL ENTORNO
+# Librerías externas:
 import streamlit as st
+
+# Módulos propios
 from src import traduccion as tr
-from src.data import URL_POSTER
 
-RONDAS_TOTALES = 4
+# Variables globales
+from src.config import URL_POSTER, RONDAS_TOTALES
 
+### DEFINICIÓN DE FUNCIONES
 def marcar_ronda(i):
     """Marca la ronda actual en la sesión de Streamlit.
     

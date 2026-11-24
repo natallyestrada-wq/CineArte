@@ -1,32 +1,23 @@
 ### PREPARACIÓN DEL ENTORNO
+# Librerías externas:
 import streamlit as st
-import plotly.express as px
 import pandas as pd
 
-from src.data import cargar_pelis, filtrar_peliculas, URL_POSTER
+# Módulos propios
+from src.data import cargar_pelis, filtrar_peliculas, inicializar_sesion
 from src.traduccion import traducir_texto, traducir_genero, traducir_idioma
 import src.figuras as fig
 
-#---------------------Para hacer debuging------------
-from pprint import pprint
-pprint(dict(st.session_state))
-#----------------------------------------------------
+# Variables globales
+from src.config import URL_POSTER
+from src.traduccion import DICCIONARIO_GENEROS
 
-### CARGA DE DATOS
+# Carga de datos
 # st.cache_data.clear() # forzar recarga de datos para que actualice el dataframe si se cambia el archivo CSV
 pelis = cargar_pelis()  # Cargar las películas desde el archivo CSV
 
-### INICIALIZACIÓN DE VARIABLES DE SESIÓN
-if (
-    "pelis_ver" not in st.session_state
-):  # para guardar las películas que el usuario quiere ver
-    st.session_state["pelis_ver"] = []
-
-if (
-    "pelis_vistas" not in st.session_state
-):  # para guardar las películas que el usuario ya vió
-    st.session_state["pelis_vistas"] = []
-
+# Inicialización de variables de sesión
+inicializar_sesion()
 
 ### ESTRUCTURA VISUAL DE LA PÁGINA
 st.title("🔍 Explorar")
@@ -38,10 +29,14 @@ titulo_buscar = st.text_input(
 )
 
 col1, col2, col3 = st.columns(3)
+
 with col1:
-    search_genre = st.text_input(
+    search_genre = st.selectbox(
         "🎭 Género",
-        placeholder="Ej. Drama",
+        options=list(DICCIONARIO_GENEROS.keys()),
+        format_func=traducir_genero,
+        index=None,
+        placeholder="Selecciona un género...",
     )
 
 with col2:
@@ -59,7 +54,7 @@ with col3:
 pelis_filtradas = filtrar_peliculas(
     pelis,
     titulo= titulo_buscar,
-    generos= [search_genre], # se debe entregar tipo lista porque así lo espera la función
+    generos= search_genre, 
     directores=search_director,
     actores=search_cast
 )
@@ -159,16 +154,17 @@ if eventos_tabla.selection.rows:  # si el usuario selecciona una fila
 
     col_izq, col_der = st.columns([1, 2])
     with col_izq:
-        url_poster = URL_POSTER + peli['poster_path']
-        st.image(url_poster, width='stretch')
+        if pd.notna(peli['poster_path']):
+            url_poster = URL_POSTER + peli['poster_path']
+            st.image(url_poster, width='stretch')
 
     with col_der:
         st.subheader(peli["title"])
-        if not type(peli["tagline"]) == float:  # si no es vacío
+        if pd.notna(peli["tagline"]):  # si no es vacío
             st.caption(traducir_texto(peli["tagline"]))
         st.write(traducir_texto(peli["overview"]))
 
-        anho = f"📅 Lanzamiento: {peli['release_date'][0:4]}"
+        anho = f"📅 Lanzamiento: {str(peli['release_date'])[0:4]}"
         duracion_idioma = f"⌛ {peli['runtime']} minutos 🗣️ {traducir_idioma(peli['original_language'])}"
 
         rating = f"⭐ Rating: {peli['averageRating']}"
@@ -229,8 +225,8 @@ if pelis_filtradas.shape[0] > 10:
     if titulo_buscar.strip():
         filtros_activos.append(f"Título: {titulo_buscar.strip()}")
 
-    if search_genre.strip():
-        filtros_activos.append(f"Género: {search_genre.strip()}")
+    if search_genre:
+        filtros_activos.append(f"Género: {traducir_genero(search_genre)}")
 
     if search_director.strip():
         filtros_activos.append(f"Director: {search_director.strip()}")

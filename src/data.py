@@ -1,11 +1,18 @@
-import pandas as pd
+# MÓDULO DATA.PY
+# Contiene funciones para administración de los datos
+#       cargar_pelis(): genera un dataframe a partir del csv
+#       filtrar_peliculas(): reduce el dataframe según criterios de filtrado
+#       inicializar_sesion(): inicializa variables de sesión
+
+### PREPARACIÓN DEL ENTORNO
+# Librerías externas:
 import streamlit as st
-from pathlib import Path
+import pandas as pd
 
-RAIZ = Path(__file__).parent.parent
-RUTA_MOVIES = RAIZ / "data" / "movies.csv"
-URL_POSTER = "https://image.tmdb.org/t/p/w500"
+# Variables globales
+from src.config import RUTA_MOVIES
 
+### DEFINICIÓN DE FUNCIONES
 ## FUCIÓN PARA LEER LA BASE DE DATOS Y CARGARLA A UN DATAFRAME
 @st.cache_data  # decorador para almacenar en caché los resultados de la función
 def cargar_pelis():
@@ -63,8 +70,9 @@ def filtrar_peliculas(
             resultado = resultado[
                 resultado[columna].str.contains(
                     valor.strip(),
-                    case=False,
-                    regex=False
+                    case=False,   # no diferencia mayúsculas de minúsculas
+                    regex=False,   # no toma el texto como una expresión regular
+                    na=False        # ignora celdas con vacías (NaN, NA)
                 )
             ]
         # .str.contains(...): comprueba si cada texto contiene lo que escribió el usuario.
@@ -74,7 +82,7 @@ def filtrar_peliculas(
 
     # Filtro de géneros (lista)
     if generos:
-
+        
         mascara_generos = pd.Series( # Crear serie con todas las columnas en falso y 
             False,                   # el mismo índice que el df de entrada
             index=resultado.index
@@ -85,7 +93,8 @@ def filtrar_peliculas(
             coincidencias = resultado["genres"].str.contains(
                 genero,
                 case=False,
-                regex=False
+                regex=False,
+                na=False
             )
             # Crea una serie con el mismo índice del df de entrada y con un una columna 
             # booleana que indica verdadero donde encuentre una coincidencia de texto
@@ -94,7 +103,7 @@ def filtrar_peliculas(
             # case=False: ignora mayúsculas y minúsculas.
             # regex=False: interpreta el texto como una búsqueda literal, no como una expresión regular.
 
-            mascara_generos = mascara_generos | coincidencias # Realiza una intersección entre los
+            mascara_generos = mascara_generos | coincidencias # Realiza una unión entre los
                             # valores de ambas series, conservando los positivos (true)
                             # el símbolo | corresponde a la ó inclusiva
             
@@ -113,7 +122,7 @@ def filtrar_peliculas(
         ]
     
     # Quitar las películas con bajo rating
-    if mejor_rating is not None:
+    if mejor_rating:
             resultado = resultado[
                 resultado["averageRating"] >= 8.0
             ]
@@ -131,3 +140,18 @@ def filtrar_peliculas(
         ]
 
     return resultado
+
+## FUCIÓN PARA INICILIZAR VARIABLES DE SESIÓN
+def inicializar_sesion():
+    # 1. Definir diccionario con el estado inicial 
+    estado_inicial = {
+        "pelis_ver": [],  # Películas que el usuario quiere ver
+        "pelis_vistas": [],  # Películas que el usuario ya vio
+        "pelis_jugadas": [],
+        "partidas_jugadas": 0,  # Contador de partidas totales
+    }
+
+    # 2. Inicializar todas las variables
+    for clave, valor_defecto in estado_inicial.items():
+        if clave not in st.session_state:
+            st.session_state[clave] = valor_defecto

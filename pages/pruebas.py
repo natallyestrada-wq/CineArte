@@ -13,6 +13,8 @@ pprint(dict(st.session_state))
 #----------------------------------------------------
 
 st.title("Página de pruebas 🚧")
+# 7. 
+
 
 # 6. Comportamiento de botones y variables de sesión
 #a
@@ -67,109 +69,109 @@ st.divider()
 
 #-------------------------------------------------------------------------------------
 # d.
-if not "pelis_excluidas" in st.session_state:
-    st.session_state.pelis_excluidas=[]
+# if not "pelis_excluidas" in st.session_state:
+#     st.session_state.pelis_excluidas=[]
 
-if ("pelis_ver" not in st.session_state):  # para guardar las películas que el usuario quiere ver
-    st.session_state["pelis_ver"] = []
+# if ("pelis_ver" not in st.session_state):  # para guardar las películas que el usuario quiere ver
+#     st.session_state["pelis_ver"] = []
 
-if ("pelis_vistas" not in st.session_state):  # para guardar las películas que el usuario ya vió
-    st.session_state["pelis_vistas"] = []
+# if ("pelis_vistas" not in st.session_state):  # para guardar las películas que el usuario ya vió
+#     st.session_state["pelis_vistas"] = []
 
-if not "partidas_jugadas" in st.session_state:
-    st.session_state.partidas_jugadas = 0
+# if not "partidas_jugadas" in st.session_state:
+#     st.session_state.partidas_jugadas = 0
     
-if 'ronda_actual' not in st.session_state:
-    st.session_state.ronda_actual = -1 
+# if 'ronda_actual' not in st.session_state:
+#     st.session_state.ronda_actual = -1 
 
-#-------------------------
-if st.session_state.ronda_actual == -1:
-    st.button('No ha iniciado la partida, comenzar', on_click=marcar_ronda, args=[0])
-else:
-    st.button('Empezar de cero', on_click=reiniciar_juego)
+# #-------------------------
+# if st.session_state.ronda_actual == -1:
+#     st.button('No ha iniciado la partida, comenzar', on_click=marcar_ronda, args=[0])
+# else:
+#     st.button('Empezar de cero', on_click=reiniciar_juego)
 
-if st.session_state.ronda_actual == 0:
-    st.write("analizando juego, escoge si iniciar ronda 1")
+# if st.session_state.ronda_actual == 0:
+#     st.write("analizando juego, escoge si iniciar ronda 1")
 
-    # filtrar df
-# filtrar_pelis(preferencias)
+#     # filtrar df
+# # filtrar_pelis(preferencias)
 
-    # condicional:        
-    #si si:
-    st.button('si se puede Iniciar ronda 1', on_click=marcar_ronda, args=[1])
-    # guardar df en estado
-    # st.session_state["df_duelos"] = .....
+#     # condicional:        
+#     #si si:
+#     st.button('si se puede Iniciar ronda 1', on_click=marcar_ronda, args=[1])
+#     # guardar df en estado
+#     # st.session_state["df_duelos"] = .....
 
-    #si no:
-    st.button('No se puede iniciar ronda 1', on_click=marcar_ronda, args=[-1])
-
-
-if st.session_state.ronda_actual == 1:
-
-    st.write('Éxito, entramos al juego')
-    st.write("mostrar aquí marco de duelos")
-# dibujar_marco_duelos()
-
-    # extraer par de pelis
-# peli_izq = seleccionar_peli_duelo()
-# peli_der = seleccionar_peli_duelo()
-    st.write(f"mostrar aquí el duelo {st.session_state.ronda_actual}")
-#? funcion? mostrar peli_izq y peli_der
-#? función? mostrar botones:
-
-    if st.button("escojo peli izquierda", 
-              on_click=registrar_seleccion, 
-              args=["id peli izq"]):
-        st.rerun()
-    if st.button("escojo peli derecha", 
-              on_click=registrar_seleccion, 
-              args=["id peli der"]):
-        st.rerun()
-# registrar_seleccion()
-
-if st.session_state.ronda_actual >= 2 and st.session_state.ronda_actual <=4:
-
-    # extraer par de pelis
-# peli_izq = st.session_state["peli_ganadora"]
-# peli_der = seleccionar_peli_duelo()
-    st.write(f"mostrar aquí el duelo {st.session_state.ronda_actual}")
-#? funcion? mostrar peli_izq y peli_der
-#? función? mostrar botones:
-
-    if st.button("escojo peli izquierda", 
-              on_click=registrar_seleccion, 
-              args=["id peli izq"]):
-        st.rerun()
-    if st.button("escojo peli derecha", 
-              on_click=registrar_seleccion, 
-              args=["id peli der"]):
-        st.rerun()
-# registrar_seleccion()
+#     #si no:
+#     st.button('No se puede iniciar ronda 1', on_click=marcar_ronda, args=[-1])
 
 
+# if st.session_state.ronda_actual == 1:
+
+#     st.write('Éxito, entramos al juego')
+#     st.write("mostrar aquí marco de duelos")
+# # dibujar_marco_duelos()
+
+#     # extraer par de pelis
+# # peli_izq = seleccionar_peli_duelo()
+# # peli_der = seleccionar_peli_duelo()
+#     st.write(f"mostrar aquí el duelo {st.session_state.ronda_actual}")
+# #? funcion? mostrar peli_izq y peli_der
+# #? función? mostrar botones:
+
+#     if st.button("escojo peli izquierda", 
+#               on_click=registrar_seleccion, 
+#               args=["id peli izq"]):
+#         st.rerun()
+#     if st.button("escojo peli derecha", 
+#               on_click=registrar_seleccion, 
+#               args=["id peli der"]):
+#         st.rerun()
+# # registrar_seleccion()
+
+# if st.session_state.ronda_actual >= 2 and st.session_state.ronda_actual <=4:
+
+#     # extraer par de pelis
+# # peli_izq = st.session_state["peli_ganadora"]
+# # peli_der = seleccionar_peli_duelo()
+#     st.write(f"mostrar aquí el duelo {st.session_state.ronda_actual}")
+# #? funcion? mostrar peli_izq y peli_der
+# #? función? mostrar botones:
+
+#     if st.button("escojo peli izquierda", 
+#               on_click=registrar_seleccion, 
+#               args=["id peli izq"]):
+#         st.rerun()
+#     if st.button("escojo peli derecha", 
+#               on_click=registrar_seleccion, 
+#               args=["id peli der"]):
+#         st.rerun()
+# # registrar_seleccion()
 
 
-if st.session_state.ronda_actual==5:
-    st.write('Terminamos')
-    st.session_state.partidas_jugadas += 1
-    st.write("Tu peli recomendada es -------")
-#? función ? mostrar ganadora
-    id_ganadora ="ññññññññññññ"
 
-    boton_1, boton_2 = st.columns(2)
-    with boton_1:
-        if id_ganadora in st.session_state["pelis_ver"]:
-            st.success("💾 Guardada en tu lista para ver")
-        elif st.button("💾 Guardar para ver", width="stretch"):
-            st.session_state["pelis_ver"].append(id_ganadora)
-            st.rerun()
 
-    with boton_2:
-        if id_ganadora in st.session_state["pelis_vistas"]:
-            st.success("✅ Marcada como vista")
-        elif st.button("✅ Ya la vi", width="stretch"):
-            st.session_state["pelis_vistas"].append(id_ganadora)
-            st.rerun()
+# if st.session_state.ronda_actual==5:
+#     st.write('Terminamos')
+#     st.session_state.partidas_jugadas += 1
+#     st.write("Tu peli recomendada es -------")
+# #? función ? mostrar ganadora
+#     id_ganadora ="ññññññññññññ"
+
+#     boton_1, boton_2 = st.columns(2)
+#     with boton_1:
+#         if id_ganadora in st.session_state["pelis_ver"]:
+#             st.success("💾 Guardada en tu lista para ver")
+#         elif st.button("💾 Guardar para ver", width="stretch"):
+#             st.session_state["pelis_ver"].append(id_ganadora)
+#             st.rerun()
+
+#     with boton_2:
+#         if id_ganadora in st.session_state["pelis_vistas"]:
+#             st.success("✅ Marcada como vista")
+#         elif st.button("✅ Ya la vi", width="stretch"):
+#             st.session_state["pelis_vistas"].append(id_ganadora)
+#             st.rerun()
 
     
     
